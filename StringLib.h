@@ -11,25 +11,11 @@ struct TStringArray
 	TString* strings;
 };
 
-/* Noch nicht verwendet
-   Möglicherweise später für die Rückgabe der Formulare
-struct TField
-{
-	TString name;
-	TString value;
-};
-
-struct TFieldArray
-{
-	int length;
-	TField* fields;
-};
-*/
-
 TString initializeString(char*);
 void safeDeleteString(TString*);
-void addToString(TString*, const char*);
+void addToString(TString*, const char* const);
 void addToString(TString*, TString);
+void copyString(TString*, char*);
 void copyString(TString* destination, TString source);
 TStringArray initializeStringArray(TString);
 TStringArray initializeStringArray(char*);

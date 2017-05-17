@@ -3,7 +3,7 @@
 using namespace std;
 
 /*
-	Kreiert TString aus char* 
+Kreiert TString aus char*
 */
 TString initializeString(char* string) {
 	TString tString;
@@ -27,7 +27,7 @@ void safeDeleteString(TString* string) {
 }
 
 /*
-	Fügt einen String an TString destination an 
+Fügt einen String an TString destination an
 */
 void addToString(TString* destination, const char* const source) {
 	TString finishedString;
@@ -42,7 +42,7 @@ void addToString(TString* destination, const char* const source) {
 
 
 /*
-	Fügt einen TString an TString destination an
+Fügt einen TString an TString destination an
 */
 void addToString(TString* destination, TString source) {
 	TString finishedString;
@@ -56,29 +56,37 @@ void addToString(TString* destination, TString source) {
 }
 
 /*
-	Copiert einen TString an den Platz vom TString destination
+Copiert einen char* an den Platz vom TString destination
 */
-void copyString(TString* destination, TString source) {
+void copyString(TString* destination, char* source) {
 	safeDeleteString(destination);
-	*destination = initializeString(source.string);
+	*destination = initializeString(source);
 }
 
 
+/*
+Copiert einen TString an den Platz vom TString destination
+*/
+void copyString(TString* destination, TString source) {
+	copyString(destination, source.string);
+}
+
 
 /*
-	Kreiert TStringArray aus TString
+Kreiert TStringArray aus TString
 */
 TStringArray initializeStringArray(TString string) {
 	TStringArray tStringArray;
 	tStringArray.length = 1;
 	tStringArray.strings = new TString[tStringArray.length];
+	//tStringArray.strings[0] = initializeString(string.string);
 	tStringArray.strings[0].string = new char[string.bufferSize];
 	copyString(tStringArray.strings, string);
 	return tStringArray;
 }
 
 /*
-	Kreiert TStringArray aus char*
+Kreiert TStringArray aus char*
 */
 TStringArray initializeStringArray(char*string) {
 	TString temp = initializeString(string);
@@ -90,40 +98,43 @@ TStringArray initializeStringArray(char*string) {
 Löscht die Inhalte und das TStringArray selbst
 */
 void deleteStringArray(TStringArray* stringArray) {
-	for (int i = 0; i < stringArray->length - 1; i++)
-	{
-		safeDeleteString(&stringArray->strings[i]);
+	if (stringArray->length > 0 && stringArray->strings != NULL) {
+		for (int i = 0; i < stringArray->length; i++)
+		{
+			safeDeleteString(&stringArray->strings[i]);
+		}
+		stringArray->length = 0;
+		delete[] stringArray->strings;
+		stringArray->strings = NULL;
 	}
-	stringArray->length = 0;
-	delete[] stringArray->strings;
 }
 
 /*
-	Fügt einem TStringArray einen TString hinzu
+Fügt einem TStringArray einen TString hinzu
 */
 void addToStringArray(TStringArray* stringArray, TString string) {
 	TString* temp = stringArray->strings;
 	++stringArray->length;
 	stringArray->strings = new TString[stringArray->length];
-	for (size_t i = 0; i < stringArray->length-1; i++)
+	for (size_t i = 0; i < stringArray->length - 1; i++)
 	{
-		stringArray->strings[i] = temp[i];
+		copyString(&stringArray->strings[i], temp[i]);
 	}
 	safeDeleteString(temp);
 	stringArray->strings[stringArray->length - 1] = initializeString(string.string);
 }
 
 /*
-	Fügt einem TStringArray einen String hinzu
+Fügt einem TStringArray einen String hinzu
 */
 void addToStringArray(TStringArray* stringArray, char* string) {
 	TString temp = initializeString(string);
 	addToStringArray(stringArray, temp);
 	safeDeleteString(&temp);
-
+}
 /*
-	Sucht in string nach dem Vorkommen von search
-	Gibt TString zurück, in dem search in string durch replace ersetzt wurde 
+Sucht in string nach dem Vorkommen von search
+Gibt TString zurück, in dem search in string durch replace ersetzt wurde
 */
 TString findAndReplace(TString string, TString search, TString replace) {
 	char* subString = strstr(string.string, search.string);
