@@ -2,6 +2,7 @@
 #include <stdio.h>
 #include <io.h>
 #include "GeneralFuctions.h"
+#include "EventFunctions.h"
 
 
 #pragma warning(disable:4996)
@@ -9,8 +10,8 @@ using namespace std;
 
 
 /*
-	Erzeugt den Inhalt für die Eventtabelle abhägig von userId
-	Gibt den in HTML formatierten INhalt der Tabelle zurück
+Erzeugt den Inhalt für die Eventtabelle abhägig von userId
+Gibt den in HTML formatierten INhalt der Tabelle zurück
 */
 TString generateEventTableContent(int userId) {
 
@@ -40,9 +41,9 @@ TString generateEventTableContent(int userId) {
 		}
 
 		/* Erzeugt Tabellenzeile, in der Die Daten des Events angezeigt werden
-		   Datum
-		   Uhrzeit
-		   Name des Events
+		Datum
+		Uhrzeit
+		Name des Events
 		*/
 		if (userEvent->userId == userId) {
 			addToString(&tableContent, "        <tr>\n");

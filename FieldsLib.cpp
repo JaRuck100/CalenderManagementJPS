@@ -1,6 +1,6 @@
 #include <iostream>
 #include "StringLib.h"
-#include "Fields.h"
+#include "FieldsLib.h"
 
 /*
 Erstellt aus zwei char* ein Field
@@ -80,8 +80,8 @@ void addToFieldArray(TFieldArray* fieldArray, TField field) {
 	fieldArray->fields = new TField[fieldArray->length];
 	for (size_t i = 0; i < fieldArray->length - 1; i++)
 	{
-		copyField(&fieldArray->fields[i], temp[i]);
+		fieldArray->fields[i] = temp[i];
 	}
-	safeDeleteField(temp);
+	delete [] temp;
 	fieldArray->fields[fieldArray->length - 1] = initializeField(field.name.string, field.value.string);
 }

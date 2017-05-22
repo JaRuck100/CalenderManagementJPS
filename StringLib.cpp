@@ -118,9 +118,9 @@ void addToStringArray(TStringArray* stringArray, TString string) {
 	stringArray->strings = new TString[stringArray->length];
 	for (size_t i = 0; i < stringArray->length - 1; i++)
 	{
-		copyString(&stringArray->strings[i], temp[i]);
+		stringArray->strings[i] = temp[i];
 	}
-	safeDeleteString(temp);
+	delete [] temp;
 	stringArray->strings[stringArray->length - 1] = initializeString(string.string);
 }
 
