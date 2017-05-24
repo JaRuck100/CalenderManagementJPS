@@ -38,3 +38,12 @@ char* charToSTring(char character) {
 	string[1] = '\0';
 	return string;
 }
+
+void errorPage(char* reason) {
+	cout << "Content-type:text/html\r\n\r\n";
+	cout << "<html> \n\t<head> \n\t\t<title> Error</title> \n\t</head>\n";
+	cout << "\t<body> \n\t\t<h1>500 Internal Server Error</h1>\n";
+	cout << "\t\t<p>" << reason << "</p>\n";
+	cout << "\t</body>\n";
+	cout << "</html>";
+}

@@ -4,6 +4,7 @@
 #include "GenerateContentFunctions.h"
 #include "FieldsLib.h"
 #include "EventFunctions.h"
+#include "UserFunctions.h"
 
 #pragma warning(disable:4996)
 using namespace std;
@@ -37,7 +38,7 @@ Prüft welcher placeholder übergeben wurde.
 Ruft Funktion auf, die Inhalt für den Platzhalter zusammenbaut.
 Gibt den Inhalt, der anstelle des Platzhalters kommt, zurück.
 */
-TString replacePlaceholder(TString placeholder, int userId) {
+TString replacePlaceholder(TString placeholder, int userId, int eventId = 0) {
 	TString content = initializeString("");
 
 	if (strcmp(placeholder.string, "[@TABLE]") == 0) {
@@ -46,16 +47,24 @@ TString replacePlaceholder(TString placeholder, int userId) {
 	else if (strcmp(placeholder.string, "[@USER]") == 0) {
 		content = initializeString("Uwe");
 	}
+	else if (strcmp(placeholder.string, "[@EVENTID]") == 0) {
+		char stringEventId[6 + 1] = { 0 };
+		itoa(eventId, stringEventId, 10);
+		content = initializeString(stringEventId);
+	}
+
+
 	return content;
-}
+} 
+
 
 /*
 Baut die neue HTML-Seite zusammen.
 Gibt String zurück, in dem alle Platzhalter ersetzt wurden.
 */
-char* generateHtmlPage(FILE* htmlFile, int userId) {
+char* generateHtmlPage(FILE* htmlFile, int userId, int eventId = 0) {
 	// Setzt den Content-Type an den Anfang der HTML-Seite 
-	TString htmlPage = initializeString("Content - Type: text / html\r\n\r\n");
+	TString htmlPage = initializeString("Content-type:text/html\r\n\r\n");
 	TString htmlFromFile = getHtmlFromFile(htmlFile);
 	// Fügt den restlichen Inhalt aus dem htmlFromFile hinzu.
 	addToString(&htmlPage, htmlFromFile);
@@ -66,6 +75,7 @@ char* generateHtmlPage(FILE* htmlFile, int userId) {
 		TString htmlPageWithoutPlaceholder = initializeString("");
 		TStringArray placeholders = initializeStringArray("[@TABLE]");
 		addToStringArray(&placeholders, "[@USER]");
+		addToStringArray(&placeholders, "[@EVENTID]");
 		TString content = initializeString("");
 
 		fclose(htmlFile);
@@ -74,8 +84,8 @@ char* generateHtmlPage(FILE* htmlFile, int userId) {
 		// lässt die Platzhalter mit dem dem gewünschten Inhalt ersetzten
 		for (size_t i = 0; i < placeholders.length; i++)
 		{
-			copyString(&content, replacePlaceholder(placeholders.strings[i], userId));
-			htmlPageWithoutPlaceholder = findAndReplace(htmlPage, placeholders.strings[i], content);
+			copyString(&content, replacePlaceholder(placeholders.strings[i], userId, eventId));
+			copyString(&htmlPageWithoutPlaceholder, findAndReplace(htmlPage, placeholders.strings[i], content));
 			copyString(&htmlPage, htmlPageWithoutPlaceholder);
 			safeDeleteString(&htmlPageWithoutPlaceholder);
 		}
@@ -105,9 +115,23 @@ TFieldArray parseInputString(char* inputString) {
 			i++;
 			for (i; inputString[i] != '&' && inputString[i] != '\0'; i++)
 			{
+				if (inputString[i] == '%' && inputString[i + 1] == '3' && inputString[i + 2] == 'A') {
+					char fieldValueCharacter[2] = "";
+					strcpy(fieldValueCharacter, charToSTring(':'));
+					addToString(&fieldValue, fieldValueCharacter);
+					i += 2;
+				}
+				else if (inputString[i] == '+') {
+					char fieldValueCharacter[2] = "";
+					strcpy(fieldValueCharacter, charToSTring(' '));
+					addToString(&fieldValue, fieldValueCharacter);
+				}
+				else{
 				char fieldValueCharacter[2] = "";
 				strcpy(fieldValueCharacter, charToSTring(inputString[i]));
 				addToString(&fieldValue, fieldValueCharacter);
+
+				}
 			}
 
 			safeDeleteField(&field);
@@ -145,117 +169,142 @@ TFieldArray parseInputString(char* inputString) {
 
 }
 
-void main() {
+/*
+gibt die fertig gebaute html seite aus
+nimmt die user und event id
+wurde beim ändern des events benötigt
+*/
+void printOutHtmlPage(char* htmlPath, int userId, int eventId) {
+	FILE* htmlFile;
+	htmlFile = fopen(htmlPath, "r+");
+	if (htmlFile == NULL) {
+		cout << "Content-type:text/html\r\n\r\n" << endl;
+		cout << "fail";
+	}
+	TString htmlPage = initializeString(generateHtmlPage(htmlFile, userId, eventId));
+	cout << htmlPage.string;
+	safeDeleteString(&htmlPage);
+	fclose(htmlFile);
+}
+
+/*
+gibt die fertig gebaute html seite aus
+nimmt die user id
+*/
+void printOutHtmlPage(char* htmlPath) {
+	FILE* htmlFile;
+	htmlFile = fopen(htmlPath, "r+");
+	if (htmlFile == NULL) {
+		cout << "Content-type:text/html\r\n\r\n" << endl;
+		cout << "fail";
+	}
+	TString htmlPage = initializeString(generateHtmlPage(htmlFile, 1));
+	cout << htmlPage.string;
+	safeDeleteString(&htmlPage);
+	fclose(htmlFile);
+}
+
+int main() {
 	try
 	{
+		int _userId = 1;
+		char input[500 + 1] = { 0 };
+		cin >> input;
+		// nimmt die url die vom request kommt 
+		// die konfig auf dem apache ist so eingestellt, dass, wenn eine datei nicht vorhanden ist
+		// auf de exe gelinkt wird
+		// apache config auf git vorhanden
+		char* request_uri = getenv("REQUEST_URI");
 
+		//entscheidung, was passieren soll und wohin geleitet weerden soll
+		if (strcmp(request_uri, "/show_events") == 0) {
+			printOutHtmlPage("../htdocs/Events.htm");
+			return 0;
+		} 
+		else if (strcmp(request_uri, "/create_events") == 0) {
+			printOutHtmlPage("../htdocs/HTMLPage.htm");
+			return 0;
+		}
+		else if (strcmp(request_uri, "/menue") == 0) {
+			printOutHtmlPage("../htdocs/Menue.htm");
+			return 0;
+		}
+		else if (strcmp(request_uri, "/add_event") == 0) {
 
-	char input[500] = { 0 };
-	//strcpy(input ,"name=bla&date=12.01.17&time=12:34");
-	//cin >> input;
-	FILE* eventsFile;
-	eventsFile = openEventFile();
-	//if (eventFile == NULL)
-	//{
-	//	//return 1;
-	//}
-	//TFieldArray inputFields = parseInputString(input);
-	//saveEventInFile(eventFile, inputFields, 1);
-	////saveEventInFile(eventFile, "Party bei Kathrin", "13.02.2017", "18:30", 1);
-	////fclose(eventFile);
+			FILE* eventsFile;
+			eventsFile = openEventFile();
+			if (eventsFile == NULL)
+			{
+				errorPage("fehler beim öffnen");
+			}
+			TFieldArray inputFields = parseInputString(input);
+			saveEventInFile(eventsFile, inputFields, _userId);
 
-	////FILE* htmlFile;
-	////htmlFile = fopen("Events.htm", "r+");
-	////if (htmlFile == NULL) {
-	////	cout << "ERROR beim öffnen der Datei" << endl;
-	////	return 1;
-	////}
-	////TString htmlPage = initializeString(generateHtmlPage(htmlFile, 1));
-	////// Ausgabe neuer HTML-Seite
-	////cout << htmlPage.string;
-	////safeDeleteString(&htmlPage);
+			fclose(eventsFile);
+			printOutHtmlPage("../htdocs/menue.htm");
+			safeDeleteFieldArray(&inputFields);
+			return 0;
+		}
+		else if (strcmp(request_uri, "/delete_event") == 0) {
 
-	////fclose(htmlFile);
-	//TField field = initializeField("date", "01.01.17");
-	//TFieldArray fieldArray = initializeFieldArray(field);
-	//safeDeleteField(&field);
-	////field = initializeField("time", "12:34");
-	////addToFieldArray(&fieldArray, field);
-	////safeDeleteField(&field);
-	//field = initializeField("name", "Treffen mit Frida");
-	//addToFieldArray(&fieldArray, field);
+			TFieldArray inputFields = parseInputString(input);
+			FILE* eventsFile;
+			eventsFile = openEventFile();
+			int eventId = atoi(inputFields.fields[0].value.string);
+			if (deleteEvent(eventsFile, eventId) != 0) {
+				errorPage("fehler beim löschen");
+			}
+			printOutHtmlPage("../htdocs/Events.htm");
+			fclose(eventsFile);
 
-	////saveEventInFile(eventFile, fieldArray, 1);
-	//safeDeleteField(&field);
-	////safeDeleteFieldArray(&fieldArray);
-	////fseek(eventFile, sizeof(int), SEEK_SET);
-	//TEvent* newevent = new TEvent;
-	////while (!feof(eventFile))
-	////{
-	////	fread(newevent, sizeof(TEvent), 1, eventFile);
-	////	if (feof(eventFile)) {
-	////		continue;
-	////	}
-	////	if (newevent->userId == 1)
-	////	{
-	////		cout << newevent->date << endl;
-	////		cout << newevent->eventName << endl;
-	////		cout << newevent->time << endl;
-	////	}
-	////}
-	//changeEvent(eventFile, fieldArray, 1);
-	//fseek(eventFile, sizeof(int), SEEK_SET);
-	//cout << "Content-Type: text/html\r\n\r\n";
-
-	//cout << "<html><head><title>CGI Test 2</title></head>";
-
-	//cout << "<body>";
-
-		//fread(newevent, sizeof(TEvent), 1, eventFile);
-
-	/*	cout <<"<p>" << inputFields.fields[0].value.string <<" </p>"<< endl;
-		cout << "<p>" << inputFields.fields[1].value.string << " </p>" << endl;
-		cout << "<p>" << inputFields.fields[2].value.string << " </p>" << endl;*/
-	//cout << input;
-	//
-	//cout << "</body></html>";
-	//safeDeleteFieldArray(&inputFields); 
-	//delete newevent;
-
-
-	//saveEventInFile(eventsFile, "Treffen mit Britta", "22.03.16", "12:45", 1);
-	//saveEventInFile(eventsFile, "Treffen mit Tina", "28.03.17", "18:25", 1);
-	//saveEventInFile(eventsFile, "Geburstatg Tine", "12.12.18", "08:30", 1);
-	//fseek(eventsFile, sizeof(int), SEEK_SET);
-
-	//TEvent* newevent = new TEvent;
-	//while (!feof(eventsFile))
-	//	{
-	//		fread(newevent, sizeof(TEvent), 1, eventsFile);
-	//		if (feof(eventsFile)) {
-	//			continue;
-	//		}
-	//		if (newevent->userId == 1)
-	//		{
-	//			cout << newevent->date << endl;
-	//			cout << newevent->eventName << endl;
-	//			cout << newevent->time << endl;
-	//			cout << newevent->id << endl << endl;
-	//		}
-	//	}
-	//delete newevent;
-
-
-	fclose(eventsFile);
-	
-	//return 0;
-
-
+			safeDeleteFieldArray(&inputFields);
+			return 0;
+		}
+		else if(strcmp(request_uri, "/login") == 0)
+		{
+			errorPage(request_uri);
+			return 0;
+		}
+		else if (strcmp(request_uri, "/change_password") == 0)
+		{
+			errorPage(request_uri);
+			return 0;
+		}
+		else if (strcmp(request_uri, "/change_event") == 0) {
+			TFieldArray inputFields = parseInputString(input);
+			FILE* eventsFile;
+			eventsFile = openEventFile();
+			int eventId = atoi(inputFields.fields[0].value.string);
+			printOutHtmlPage("../htdocs/ChangeEvent.htm", _userId, eventId);
+			fclose(eventsFile);
+			safeDeleteFieldArray(&inputFields);
+			return 0;
+		}
+		else if (strcmp(request_uri, "/changed_event") == 0) {
+			TFieldArray inputFields = parseInputString(input);
+			FILE* eventsFile;
+			eventsFile = openEventFile();
+			int eventId = 0;
+			for (size_t i = 0; i < inputFields.length; i++)
+			{
+				if (strcmp(inputFields.fields[i].name.string, "eventId") == 0) {
+					eventId = atoi(inputFields.fields[i].value.string);
+				}
+			}
+			changeEvent(eventsFile, inputFields, eventId);
+			fclose(eventsFile);
+			printOutHtmlPage("../htdocs/Events.htm");
+			safeDeleteFieldArray(&inputFields);
+			
+			return 0;
+		}
+		else {
+			errorPage(request_uri);
+			return 1;
+		}
 	}
 	catch (const std::exception&)
 	{
-		FILE* errorPage;
-		errorPage = fopen("ErrorPage500.htm", "r");
-		cout << generateHtmlPage(errorPage, 0);
+		errorPage("boom!");
 	}
 }

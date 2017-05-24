@@ -16,5 +16,5 @@ void buildEventFromFileArray(TEvent*, TFieldArray);
 void saveEventInFile(FILE*, char*, char*, char*, int);
 void saveEventInFile(FILE*, TFieldArray, int);
 //FILE* searchForEventPosition(FILE*, int);
-void changeEvent(FILE*, TFieldArray, int);
+int changeEvent(FILE*, TFieldArray, int);
 int deleteEvent(FILE*, int);

@@ -17,6 +17,7 @@ FILE* openEventFile() {
 	if (access("Events.txt", 00) == 0) {
 		eventsFile = fopen("Events.txt", "r+");
 		if (eventsFile == NULL) {
+			errorPage("fehler beim öffnen");
 			return NULL;
 		}
 	}
@@ -29,11 +30,13 @@ FILE* openEventFile() {
 			temp = fopen("temp.txt", "r");
 			eventsFile = fopen("Events.txt", "w+");
 			if (eventsFile == NULL || temp == NULL) {
+				errorPage("fehler beim öffnen");
 				return NULL;
 			}
 
 			TEvent* tempEvent = new TEvent;
 			if (tempEvent == NULL) {
+				errorPage("fehler beim erstellen");
 				return NULL;
 			}
 			int eventIdCounter = 0;
@@ -141,6 +144,9 @@ void saveEventInFile(FILE* eventsFile, TFieldArray fieldArray, int userId) {
 //	return NULL;
 //}
 
+/*
+baut aus einem filearray die werte in ein übergebenes Event
+*/
 void buildEventFromFileArray(TEvent* event, TFieldArray fieldArray) {
 	for (size_t i = 0; i < fieldArray.length; i++)
 	{
@@ -159,9 +165,13 @@ void buildEventFromFileArray(TEvent* event, TFieldArray fieldArray) {
 }
 
 
+/*
+aucht in der Datei nach dem Event mit eventId
+ändert die Werte des events, die im FileArray array liegen, rest bleibt 
+speichert das geänderete Event an die Stelle des alten Events
+*/
 
-// im Feldarray feldname mit Anderung, eine oder mehrere möglich
-void changeEvent(FILE* eventsFile, TFieldArray fieldArray, int eventId) {
+int changeEvent(FILE* eventsFile, TFieldArray fieldArray, int eventId) {
 	TEvent* targetEvent = new TEvent;
 	fseek(eventsFile, sizeof(int), SEEK_SET);
 	bool eventFound = false;
@@ -180,9 +190,18 @@ void changeEvent(FILE* eventsFile, TFieldArray fieldArray, int eventId) {
 		}
 	}
 	delete targetEvent;
+	if (eventFound) {
+		return 0;
+	}
+	else {
+		return 1;
+	}
+
 }
 
-
+/*
+löscht das Event mit der Id eventId aus der Event-Datei
+*/
 int deleteEvent(FILE* eventsFile, int eventId) {
 	FILE* temp;
 	temp = fopen("temp.txt", "w");
@@ -210,9 +229,11 @@ int deleteEvent(FILE* eventsFile, int eventId) {
 	fclose(temp);
 	fclose(eventsFile);
 	if (remove("Events.txt") != 0) {
+		errorPage("löschen fehlgeschlagen");
 		return 2;
 	}
 	if (rename("temp.txt", "Events.txt") != 0) {
+		errorPage("umbennenung fehlgeschlagen");
 		return 2;
 	}
 	eventsFile = openEventFile();
