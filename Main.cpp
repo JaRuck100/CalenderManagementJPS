@@ -9,30 +9,6 @@
 #pragma warning(disable:4996)
 using namespace std;
 
-
-/*
-Schreibt den Inhalt von htmlFile in einen TString.
-*/
-TString getHtmlFromFile(FILE* htmlFile) {
-	char htmlPage[1000 + 1] = { 0 };
-	int a = 0;
-	char character;
-
-	while (!feof(htmlFile)) {
-
-		character = getc(htmlFile);
-		if (feof(htmlFile)) {
-			continue;
-		}
-		htmlPage[a] = character;
-		a++;
-	}
-	//htmlPage[a] = '\0';
-	TString htmlPageString = initializeString(htmlPage);
-	return htmlPageString;
-}
-
-
 /*
 Prüft welcher placeholder übergeben wurde.
 Ruft Funktion auf, die Inhalt für den Platzhalter zusammenbaut.
@@ -96,6 +72,10 @@ char* generateHtmlPage(FILE* htmlFile, int userId, int eventId = 0) {
 	return htmlPage.string;
 }
 
+bool isHex(char c) {
+	return (c >= '0' && c <= '9') || (c >= 'a' && c <= 'f') || (c >= 'A' && c <= 'F');
+}
+
 /*
 Zerlegt einen Inputstring in die Feldnamen und deren dazugehörigen Werte
 Gibt ein TFieldArray mit den einzelnen name-value-Paaren zurück
@@ -106,6 +86,30 @@ TFieldArray parseInputString(char* inputString) {
 	TString fieldName = initializeString("");
 	TString fieldValue = initializeString("");
 	bool isFirst = true;
+	unsigned char fromHexTable[256] = { 0 };
+	fromHexTable['0'] = 0;
+	fromHexTable['1'] = 1;
+	fromHexTable['2'] = 2;
+	fromHexTable['3'] = 3;
+	fromHexTable['4'] = 4;
+	fromHexTable['5'] = 5;
+	fromHexTable['6'] = 6;
+	fromHexTable['7'] = 7;
+	fromHexTable['8'] = 8;
+	fromHexTable['9'] = 9;
+	fromHexTable['A'] = 10;
+	fromHexTable['B'] = 11;
+	fromHexTable['C'] = 12;
+	fromHexTable['D'] = 13;
+	fromHexTable['E'] = 14;
+	fromHexTable['F'] = 15;
+	fromHexTable['a'] = 10;
+	fromHexTable['b'] = 11;
+	fromHexTable['c'] = 12;
+	fromHexTable['d'] = 13;
+	fromHexTable['e'] = 14;
+	fromHexTable['f'] = 15;
+
 
 	for (size_t i = 0; inputString[i] != '\0'; i++)
 	{
@@ -115,21 +119,20 @@ TFieldArray parseInputString(char* inputString) {
 			i++;
 			for (i; inputString[i] != '&' && inputString[i] != '\0'; i++)
 			{
-				if (inputString[i] == '%' && inputString[i + 1] == '3' && inputString[i + 2] == 'A') {
-					char fieldValueCharacter[2] = "";
-					strcpy(fieldValueCharacter, charToSTring(':'));
-					addToString(&fieldValue, fieldValueCharacter);
+				if (inputString[i] == '%' && isHex(inputString[i + 1]) && isHex(inputString[i + 2])) {
+					int asciiValue = 0;
+					char value = inputString[i + 1];
+					asciiValue += fromHexTable[inputString[i + 1]] *16;
+					asciiValue += fromHexTable[inputString[i + 2]];
+					unsigned char character = asciiValue;
+					addToString(&fieldValue, character);
 					i += 2;
 				}
 				else if (inputString[i] == '+') {
-					char fieldValueCharacter[2] = "";
-					strcpy(fieldValueCharacter, charToSTring(' '));
-					addToString(&fieldValue, fieldValueCharacter);
+					addToString(&fieldValue, ' ');
 				}
-				else{
-				char fieldValueCharacter[2] = "";
-				strcpy(fieldValueCharacter, charToSTring(inputString[i]));
-				addToString(&fieldValue, fieldValueCharacter);
+				else {
+					addToString(&fieldValue, inputString[i]);
 
 				}
 			}
@@ -156,9 +159,7 @@ TFieldArray parseInputString(char* inputString) {
 			}
 		}
 		else {
-			char fieldNameCharacter[2] = "";
-			strcpy(fieldNameCharacter, charToSTring(inputString[i]));
-			addToString(&fieldName, fieldNameCharacter);
+			addToString(&fieldName, inputString[i]);
 		}
 	}
 
@@ -209,12 +210,15 @@ int main() {
 	{
 		int _userId = 1;
 		char input[500 + 1] = { 0 };
-		cin >> input;
+		
 		// nimmt die url die vom request kommt 
 		// die konfig auf dem apache ist so eingestellt, dass, wenn eine datei nicht vorhanden ist
 		// auf de exe gelinkt wird
 		// apache config auf git vorhanden
 		char* request_uri = getenv("REQUEST_URI");
+		//char request_uri [30] = { 0 };
+		//strcpy(request_uri, "/add_event");
+
 
 		//entscheidung, was passieren soll und wohin geleitet weerden soll
 		if (strcmp(request_uri, "/show_events") == 0) {
@@ -230,7 +234,7 @@ int main() {
 			return 0;
 		}
 		else if (strcmp(request_uri, "/add_event") == 0) {
-
+			cin >> input;
 			FILE* eventsFile;
 			eventsFile = openEventFile();
 			if (eventsFile == NULL)
@@ -239,14 +243,13 @@ int main() {
 			}
 			TFieldArray inputFields = parseInputString(input);
 			saveEventInFile(eventsFile, inputFields, _userId);
-
 			fclose(eventsFile);
 			printOutHtmlPage("../htdocs/menue.htm");
 			safeDeleteFieldArray(&inputFields);
 			return 0;
 		}
 		else if (strcmp(request_uri, "/delete_event") == 0) {
-
+			cin >> input;
 			TFieldArray inputFields = parseInputString(input);
 			FILE* eventsFile;
 			eventsFile = openEventFile();
@@ -271,6 +274,7 @@ int main() {
 			return 0;
 		}
 		else if (strcmp(request_uri, "/change_event") == 0) {
+			cin >> input;
 			TFieldArray inputFields = parseInputString(input);
 			FILE* eventsFile;
 			eventsFile = openEventFile();
@@ -281,6 +285,7 @@ int main() {
 			return 0;
 		}
 		else if (strcmp(request_uri, "/changed_event") == 0) {
+			cin >> input;
 			TFieldArray inputFields = parseInputString(input);
 			FILE* eventsFile;
 			eventsFile = openEventFile();
@@ -297,6 +302,86 @@ int main() {
 			safeDeleteFieldArray(&inputFields);
 			
 			return 0;
+		}
+		else if(strcmp(request_uri, "/show_events_ajax") == 0 ) {
+			TString eventsJson = initializeString("");
+			FILE* eventsFile = openEventFile();
+			TEvent* event = new TEvent;
+			fseek(eventsFile, sizeof(int), SEEK_SET);
+			addToString(&eventsJson, "[ ");
+			while (!feof(eventsFile))
+			{
+
+				fread(event, sizeof(TEvent), 1, eventsFile);
+				if (feof(eventsFile)) {
+					continue;
+				}
+
+				addToString(&eventsJson, " { \"eventName\":\"");
+				TString nameString = initializeString("");
+				for (int i = 0; i < strlen(event->eventName); ++i) {
+					char c = event->eventName[i];
+					switch (c)
+					{
+					case '\\':
+					{
+						addToString(&nameString, "\\\\");
+
+						break;
+					}
+					case '"':
+					{
+						addToString(&nameString, "\\");
+						addToString(&nameString, '"');
+
+						break;
+					}
+					case '\n':
+					{
+						addToString(&nameString, "\\");
+						addToString(&nameString, 'n');
+
+						break;
+					}
+					default:
+					{
+						addToString(&nameString, c);
+						
+						break;
+					}
+					}
+				}
+				addToString(&eventsJson, nameString);
+				safeDeleteString(&nameString);
+				addToString(&eventsJson, "\", \"date\":\"");
+				addToString(&eventsJson, event->date);
+				addToString(&eventsJson, "\", \"time\":\"");
+				addToString(&eventsJson, event->time);
+				addToString(&eventsJson, "\", \"userId\":");
+				char stringUserId[6 + 1] = { 0 };
+				itoa(event->userId, stringUserId, 10);
+				addToString(&eventsJson, stringUserId);
+				addToString(&eventsJson, ", \"id\":");
+				char stringEventId[6 + 1] = { 0 };
+				itoa(event->id, stringEventId, 10);
+				addToString(&eventsJson, stringEventId);
+
+				fread(event, sizeof(TEvent), 1, eventsFile);
+				if (feof(eventsFile)) {
+					addToString(&eventsJson, " }");
+				}
+				else {
+					addToString(&eventsJson, " },");
+					fseek(eventsFile, -sizeof(TEvent), SEEK_CUR);
+				}
+				
+			}
+			
+			addToString(&eventsJson, " ]");
+			cout << eventsJson.string;
+			//zum testen 
+			//errorPage(eventsJson.string);
+			
 		}
 		else {
 			errorPage(request_uri);

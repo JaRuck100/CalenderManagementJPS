@@ -7,6 +7,29 @@ using namespace std;
 
 
 /*
+Schreibt den Inhalt von htmlFile in einen TString.
+*/
+TString getHtmlFromFile(FILE* htmlFile) {
+	char htmlPage[1000 + 1] = { 0 };
+	int a = 0;
+	char character;
+
+	while (!feof(htmlFile)) {
+
+		character = getc(htmlFile);
+		if (feof(htmlFile)) {
+			continue;
+		}
+		htmlPage[a] = character;
+		a++;
+	}
+	//htmlPage[a] = '\0';
+	TString htmlPageString = initializeString(htmlPage);
+	return htmlPageString;
+}
+
+
+/*
 Generiert die Spalte einer Zeile einer Html Tabelle mit dem Inhalt von tableColumnOfRowContent
 Speichert dem String in tableContent
 */
@@ -25,18 +48,6 @@ int getIdCounter(FILE* file) {
 	fread(&idCounter, sizeof(int), 1, file);
 	idCounter++;
 	return idCounter;
-}
-
-
-/*
-Konvertiert einen char zu einem String
-Gibt String zurück
-*/
-char* charToSTring(char character) {
-	char string[2] = "";
-	string[0] = character;
-	string[1] = '\0';
-	return string;
 }
 
 void errorPage(char* reason) {

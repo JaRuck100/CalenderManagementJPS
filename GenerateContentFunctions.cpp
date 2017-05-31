@@ -29,12 +29,21 @@ TString generateEventTableContent(int userId) {
 	fseek(eventsFile, sizeof(int), SEEK_SET);
 	TEvent* userEvent = new TEvent;
 	if (userEvent == NULL) {
-		delete userEvent;
 		return tableContent;
 	}
+	//FILE* tableHtmlFile;
+	//tableHtmlFile = fopen("TableHtml.htm", "r");
+	//if (tableHtmlFile == NULL)
+	//{
+	//	return tableContent;
+	//}
+	//TString tableHtml = getHtmlFromFile(tableHtmlFile);
+	//TString tableHtmlCopy = initializeString("");
+	//copyString(&tableHtmlCopy, tableHtml);
 
 	while (!feof(eventsFile))
 	{
+		//copyString(&tableHtmlCopy, tableHtml);
 		fread(userEvent, sizeof(TEvent), 1, eventsFile);
 		if (feof(eventsFile)) {
 			continue;
@@ -76,8 +85,11 @@ TString generateEventTableContent(int userId) {
 		}
 
 	}
+	//safeDeleteString(&tableHtml);
+	//safeDeleteString(&tableHtmlCopy);
 	delete userEvent;
 	fclose(eventsFile);
+	//fclose(tableHtmlFile);
 
 	return tableContent;
 }

@@ -22,4 +22,5 @@ TStringArray initializeStringArray(char*);
 void deleteStringArray(TStringArray*);
 void addToStringArray(TStringArray*, TString);
 void addToStringArray(TStringArray*, char*);
+void addToString(TString*, char);
 TString findAndReplace(TString, TString, TString);

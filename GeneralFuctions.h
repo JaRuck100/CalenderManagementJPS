@@ -2,7 +2,7 @@
 #include "StringLib.h"
 
 #pragma once
+TString getHtmlFromFile(FILE*);
 void generateColumnOfRow(TString*, char*);
 int getIdCounter(FILE*);
-char* charToSTring(char);
 void errorPage(char* reason);

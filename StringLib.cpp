@@ -40,6 +40,11 @@ void addToString(TString* destination, const char* const source) {
 	safeDeleteString(&finishedString);
 }
 
+void addToString(TString* destination, char source) {
+	char cStringified[2] = { source, 0 };
+	addToString(destination, cStringified);
+}
+
 
 /*
 Fügt einen TString an TString destination an
