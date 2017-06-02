@@ -171,7 +171,8 @@ aucht in der Datei nach dem Event mit eventId
 speichert das geänderete Event an die Stelle des alten Events
 */
 
-int changeEvent(FILE* eventsFile, TFieldArray fieldArray, int eventId) {
+int changeEvent(FILE* eventsFile, TFieldArray fieldArray) {
+	//event-id rauasasuchen
 	TEvent* targetEvent = new TEvent;
 	fseek(eventsFile, sizeof(int), SEEK_SET);
 	bool eventFound = false;
