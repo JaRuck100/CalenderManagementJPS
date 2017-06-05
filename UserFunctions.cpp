@@ -5,6 +5,7 @@
 #include "UserFunctions.h"
 #include "EventFunctions.h"
 
+#pragma warning(disable:4996)
 using namespace std;
 
 

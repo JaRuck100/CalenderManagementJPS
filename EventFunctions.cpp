@@ -5,6 +5,7 @@
 #include "FieldsLib.h"
 #include "EventFunctions.h"
 
+#pragma warning(disable:4996)
 using namespace std;
 
 /*
@@ -130,24 +131,16 @@ void buildEventFromFileArray(TEvent* event, TFieldArray fieldArray) {
 		if (strcmp(fieldArray.fields[i].name.string, "title") == 0) {
 			strcpy(event->title, fieldArray.fields[i].value.string);
 			continue;
-		}
-
-		if (strcmp(fieldArray.fields[i].name.string, "start") == 0) {
+		}else if (strcmp(fieldArray.fields[i].name.string, "start") == 0) {
 			strcpy(event->start, fieldArray.fields[i].value.string);
 			continue;
-		}
-
-		if (strcmp(fieldArray.fields[i].name.string, "end") == 0) {
+		}else if (strcmp(fieldArray.fields[i].name.string, "end") == 0) {
 			strcpy(event->end, fieldArray.fields[i].value.string);
 			continue;
-		}
-
-		if (strcmp(fieldArray.fields[i].name.string, "eventId") == 0) {
+		}else if (strcmp(fieldArray.fields[i].name.string, "eventId") == 0) {
 			event->id = atoi(fieldArray.fields[i].value.string);
 			continue;
-		}
-
-		if (strcmp(fieldArray.fields[i].name.string, "description") == 0) {
+		}else if (strcmp(fieldArray.fields[i].name.string, "description") == 0) {
 			strcpy(event->description, fieldArray.fields[i].value.string);
 		}
 	}
@@ -200,13 +193,16 @@ int changeEvent(FILE* eventsFile, TFieldArray fieldArray) {
 	{
 		fread(targetEvent, sizeof(TEvent), 1, eventsFile);
 		if (feof(eventsFile)) {
-			continue;
+			break;
 		}
 		if (targetEvent->id == changedEvent->id) {
-			fseek(eventsFile, -sizeof(TEvent), SEEK_CUR);			
+			long sizeOfTEvent = sizeof(TEvent);
+
+
+			fseek(eventsFile, -sizeOfTEvent, SEEK_CUR);			
 			fwrite(changedEvent, sizeof(TEvent), 1, eventsFile);
 			eventFound = true;
-			continue;
+			break;
 		}
 	}
 	delete targetEvent;
@@ -235,7 +231,7 @@ int deleteEvent(FILE* eventsFile, int eventId) {
 	fread(&EventIdCounter, sizeof(int), 1, eventsFile);
 	fwrite(&EventIdCounter, sizeof(int), 1, temp);
 
-	TEvent* event;
+	TEvent* event = new TEvent;
 	while (!feof(eventsFile))
 	{
 		event = new TEvent;

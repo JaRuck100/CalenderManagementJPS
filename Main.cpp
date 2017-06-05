@@ -32,7 +32,7 @@ TString replacePlaceholder(TString placeholder, int userId, int eventId = 0) {
 
 
 	return content;
-} 
+}
 
 
 /*
@@ -123,7 +123,7 @@ TFieldArray parseInputString(char* inputString) {
 				if (inputString[i] == '%' && isHex(inputString[i + 1]) && isHex(inputString[i + 2])) {
 					int asciiValue = 0;
 					char value = inputString[i + 1];
-					asciiValue += fromHexTable[inputString[i + 1]] *16;
+					asciiValue += fromHexTable[inputString[i + 1]] * 16;
 					asciiValue += fromHexTable[inputString[i + 2]];
 					unsigned char character = asciiValue;
 					addToString(&fieldValue, character);
@@ -180,7 +180,7 @@ void printOutHtmlPage(char* htmlPath, int userId, int eventId) {
 	FILE* htmlFile;
 	htmlFile = fopen(htmlPath, "r+");
 	if (htmlFile == NULL) {
-		cout << "Content-type:text/html\r\n\r\n" << endl;
+		cout << "Content-type:text/html\r\n\r\n";
 		cout << "fail";
 	}
 	TString htmlPage = initializeString(generateHtmlPage(htmlFile, userId, eventId));
@@ -197,7 +197,7 @@ void printOutHtmlPage(char* htmlPath) {
 	FILE* htmlFile;
 	htmlFile = fopen(htmlPath, "r+");
 	if (htmlFile == NULL) {
-		cout << "Content-type:text/html\r\n\r\n" << endl;
+		cout << "Content-type:text/html\r\n\r\n";
 		cout << "fail";
 	}
 	TString htmlPage = initializeString(generateHtmlPage(htmlFile, 1));
@@ -436,6 +436,8 @@ void buildJson(TString* jsonString, TEvent* event) {
 	addToString(jsonString, event->start);
 	addToString(jsonString, "\", \"end\":\"");
 	addToString(jsonString, event->end);
+	addToString(jsonString, "\", \"description\":\"");
+	addToString(jsonString, event->description);
 	addToString(jsonString, "\", \"userId\":"); // gucken ob gleich
 	char stringUserId[6 + 1] = { 0 };
 	itoa(event->userId, stringUserId, 10);
@@ -452,60 +454,60 @@ void main() {
 	if (access("Current_User.txt", 00) == 0) {
 		currentUserFile = fopen("Current_User.txt", "r");
 		if (currentUserFile == NULL) {
-						//fehler
-				
+			//fehler
+
 		}
 		fread(&_userId, sizeof(int), 1, currentUserFile);
 		fclose(currentUserFile);
-		
+
 	}
 	else {
-			
+
 	}
-	
-	
+
+
 	char input[500 + 1] = { 0 };
 
-	//cin >> input;
-	strcpy(input, "url=/register&username=test1&password=bla1&passwordRepeat=bla1");
+	cin.getline(input, 501);
+	//strcpy(input, "url=/register&username=test1&password=bla1&passwordRepeat=bla1");
 	TFieldArray inputFields = parseInputString(input);
-	
+
 	for (size_t i = 0; i < inputFields.length; i++) {
 		if (strcmp(inputFields.fields[i].name.string, "url") == 0) {
-			for (size_t j = 0; j < inputFields.length; j++){
+			for (size_t j = 0; j < inputFields.length; j++) {
 				if (strcmp(inputFields.fields[i].value.string, "/register") == 0) {
 					FILE* userFile;
 					userFile = openUserFile();
 					TUser* newUser = new TUser;
-					char repetedPassword[40] = {0};
+					char repetedPassword[40] = { 0 };
 					for (size_t i = 0; i < inputFields.length; i++) {
 
 						if (strcmp(inputFields.fields[i].name.string, "username") == 0) {
 							strcpy(newUser->name, inputFields.fields[i].value.string);
-						
+
 						}
 						else if (strcmp(inputFields.fields[i].name.string, "password") == 0) {
 							strcpy(newUser->password, inputFields.fields[i].value.string);
-						
+
 						}
 						else if (strcmp(inputFields.fields[i].name.string, "passwordRepeat") == 0) {
 							strcpy(repetedPassword, inputFields.fields[i].value.string);
-						
+
 						}
 					}
 
-					bool isNewUser;
+					bool isNewUser = true;
 					if (userAlreadyExisting(userFile, *newUser) == true) {
-						cout << "Content-type:text/html\r\n\r\n" << endl;
+						cout << "Content-type:text/html\r\n\r\n";
 						//username schon vorhanden
 						isNewUser = false;
-						cout << "un";
+						cout << "nu";
 					}
 					else if (strcmp(newUser->password, repetedPassword) != 0)
 					{
-						cout << "Content-type:text/html\r\n\r\n" << endl;
+						cout << "Content-type:text/html\r\n\r\n";
 						//passwort nciht richtig
-						cout << "pn";
+						cout << "np";
 						isNewUser = false;
 					}
 					else {
@@ -516,13 +518,15 @@ void main() {
 						fseek(userFile, 0, SEEK_END);
 						// verschlüsseldung nicht vorhanden
 						saveUserInFile(userFile, *newUser);
-						cout << "Content-type:text/html\r\n\r\n" << endl;
+						cout << "Content-type:text/html\r\n\r\n";
 						cout << "y";
-					}	
+					}
 
 					delete newUser;
 					fclose(userFile);
 					j = inputFields.length;
+
+					break;
 				}
 
 				else if (strcmp(inputFields.fields[i].value.string, "/show_events") == 0) {
@@ -532,88 +536,93 @@ void main() {
 					fseek(eventsFile, sizeof(int), SEEK_SET);
 					addToString(&eventsJson, "[ ");
 					while (!feof(eventsFile)) {
-					
+
 						fread(event, sizeof(TEvent), 1, eventsFile);
 						if (feof(eventsFile)) {
 							continue;
-						
+
 						}
 						if (event->userId != _userId) {
 							continue;
-						
+
 						}
 						buildJson(&eventsJson, event);
-					
+
 						fread(event, sizeof(TEvent), 1, eventsFile);
 						if (feof(eventsFile)) {
 							addToString(&eventsJson, " }");
-						
+
 						}
 						else {
+							long sizeOfTEvent = sizeof(TEvent);
+
 							addToString(&eventsJson, " },");
-							fseek(eventsFile, -sizeof(TEvent), SEEK_CUR);
-						
+							fseek(eventsFile, -sizeOfTEvent, SEEK_CUR);
+
 						}
-					
+
 					}
-				
+
 					addToString(&eventsJson, " ]");
-					cout << "Content-type:text/html\r\n\r\n" << endl;
+					cout << "Content-type:text/html\r\n\r\n";
 					cout << eventsJson.string;
 					fclose(eventsFile);
 					//löschen des events
 					fclose(currentUserFile);
-
-				} else if (strcmp(inputFields.fields[i].value.string, "/delete") == 0) {
+					break;
+				}
+				else if (strcmp(inputFields.fields[i].value.string, "/delete") == 0) {
 					int eventId = 0;
 					for (size_t i = 0; i < inputFields.length; i++) {
 						if (strcmp(inputFields.fields[i].name.string, "id") == 0) {
-							eventId = atoi(inputFields.fields[i].name.string);
+							eventId = atoi(inputFields.fields[i].value.string);
 							FILE* eventFile = openEventFile();
-						
+
 							if (deleteEvent(eventFile, eventId) == 0) {
 								fclose(eventFile);
-								cout << "Content-type:text/html\r\n\r\n" << endl;
+								cout << "Content-type:text/html\r\n\r\n";
 								cout << "y";
 								break;
-							
+
 							}
-							else 
+							else
 							{
 								fclose(eventFile);
-								cout << "Content-type:text/html\r\n\r\n" << endl;
+								cout << "Content-type:text/html\r\n\r\n";
 								cout << "n";
 								break;
 							}
 						}
 					}
 					fclose(currentUserFile);
-				}
 
+					break;
+				}
 				else if (strcmp(inputFields.fields[i].value.string, "/add_event") == 0) {
 					FILE* eventsFile;
 					eventsFile = openEventFile();
 					if (eventsFile == NULL) {
-						cout << "Content-type:text/html\r\n\r\n" << endl;
+						cout << "Content-type:text/html\r\n\r\n";
 						cout << "n";
 					}
 					else {
 						TEvent*  newEvent = new TEvent;
 						saveEventInFile(eventsFile, inputFields, _userId);
-						cout << "Content-type:text/html\r\n\r\n" << endl;
+						cout << "Content-type:text/html\r\n\r\n";
 						cout << "y";
 						delete newEvent;
-					}	
+					}
 					fclose(eventsFile);
 					fclose(currentUserFile);
+					break;
+				
 				}
-
 				else if (strcmp(inputFields.fields[i].value.string, "/event_search") == 0) {
 					TString eventJson = initializeString("");
 					for (size_t i = 0; i < inputFields.length; i++) {
 						int eventId = 0;
 						if (strcmp(inputFields.fields[i].name.string, "id") == 0) {
-							eventId = atoi(inputFields.fields[i].name.string);
+							eventId = atoi(inputFields.fields[i].value.string);
 							FILE* eventsFile;
 							eventsFile = openEventFile();
 							fseek(eventsFile, sizeof(int), SEEK_SET);
@@ -627,7 +636,7 @@ void main() {
 								}
 								if (searchedEvent->id == eventId) {
 									eventFound = true;
-									
+
 									buildJson(&eventJson, searchedEvent);
 									addToString(&eventJson, "}");
 								}
@@ -639,41 +648,43 @@ void main() {
 					}
 
 
-					cout << "Content-type:text/html\r\n\r\n" << endl;
+					cout << "Content-type:text/html\r\n\r\n";
 					cout << eventJson.string;
 
-					safeDeleteString(&eventJson);	
+					safeDeleteString(&eventJson);
 					fclose(currentUserFile);
-					
+					break;
 				}
 				else if (strcmp(inputFields.fields[i].value.string, "/change_event") == 0) {
 					FILE* eventsFile;
 					eventsFile = openEventFile();
 					for (size_t i = 0; i < inputFields.length; i++) {
 						if (changeEvent(eventsFile, inputFields) == 0) {
-							cout << "Content-type:text/html\r\n\r\n" << endl;
+							cout << "Content-type:text/html\r\n\r\n";
 							cout << "y";
 						}
 						else
 						{
-							cout << "Content-type:text/html\r\n\r\n" << endl;
+							cout << "Content-type:text/html\r\n\r\n";
 							cout << "n";
 						}
 					}
 					fclose(eventsFile);
 					fclose(currentUserFile);
+				
+					break;
 				}
 				else if (strcmp(inputFields.fields[i].value.string, "/change_password") == 0) {
-					
+
 					TUser* user = new TUser;
 					user = findUser(_userId);
-					char* passwordRepeat;
-					char* oldPassword;
-					char* newPassword;
+					char* passwordRepeat = "";
+					char* oldPassword = "";
+					char* newPassword = "";
 					for (size_t k = 0; k < inputFields.length; k++) {
 						if (strcmp(inputFields.fields[i].name.string, "password") == 0) {
 							strcmp(oldPassword, inputFields.fields[i].value.string);
-						} 
+						}
 						if (strcmp(inputFields.fields[i].name.string, "newPassword") == 0) {
 							strcmp(newPassword, inputFields.fields[i].value.string);
 						}
@@ -683,30 +694,33 @@ void main() {
 					}
 					bool rightOldPassword = (strcmp(user->password, oldPassword) == 0);
 					bool rightNewPassword = (strcmp(newPassword, passwordRepeat) == 0);
-					
+
 
 					if (rightOldPassword &&  rightNewPassword) {
-						cout << "Content-type:text/html\r\n\r\n" << endl;
+						cout << "Content-type:text/html\r\n\r\n";
 						cout << "y";
 						FILE* userInFileLocation;
 						userInFileLocation = findUserDataLocation(*user);
 						saveUserInFile(userInFileLocation, *user);
 					}
 					else {
-						cout << "Content-type:text/html\r\n\r\n" << endl;
+						cout << "Content-type:text/html\r\n\r\n";
 						cout << "n";
 					}
-			
+
 					delete user;
 					fclose(currentUserFile);
+				
+					break;
 				}
-				else if (strcmp(inputFields.fields[i].name.string, "/logout") == 0) {
+				else if (strcmp(inputFields.fields[i].value.string, "/logout") == 0) {
 					fclose(currentUserFile);
 					remove("Current_User.txt");
-
-
+					cout << "Content-type:text/html\r\n\r\n";
+					cout << "y";
+					break;
 				}
-				else if (strcmp(inputFields.fields[i].name.string, "/login") == 0) {
+				else if (strcmp(inputFields.fields[i].value.string, "/login") == 0) {
 					currentUserFile = fopen("Current_User.txt", "w");
 					FILE* userFile;
 					userFile = openUserFile();
@@ -725,28 +739,29 @@ void main() {
 
 					}
 					fseek(userFile, sizeof(int), SEEK_SET);
-					
+
 					//_userId = findUserByName(userFile, *userLogin);
 					if (userLogin->id == -1) {
-						cout << "Content-type:text/html\r\n\r\n" << endl;
+						cout << "Content-type:text/html\r\n\r\n";
 						cout << "n";
 					}
 					else {
-						cout << "Content-type:text/html\r\n\r\n" << endl;
-						cout << "y";
+						cout << "Content-type:text/html\r\n\r\n";
+						cout << "y;" << _userId;
 						fwrite(&_userId, sizeof(int), 1, currentUserFile);
 					}
 
 					delete userLogin;
 					fclose(userFile);
 					fclose(currentUserFile);
+					break;
 				}
 			}
-			
+
 			i = inputFields.length;
 		}
-		
+
 	}
-	
+
 
 }
