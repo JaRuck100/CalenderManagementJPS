@@ -19,7 +19,6 @@ FILE* openUserFile() {
 	if (access("User.txt", 00) == 0) {
 		userFile = fopen("User.txt", "r+");
 		if (userFile == NULL) {
-			fclose(userFile);
 			return NULL;
 		}
 	}
@@ -27,11 +26,12 @@ FILE* openUserFile() {
 	else {
 		userFile = fopen("User.txt", "w+");
 		if (userFile == NULL) {
-			fclose(userFile);
 			return NULL;
 		}
 		int userIdCounter = 0;
 		fwrite(&userIdCounter, sizeof(int), 1, userFile);
+		//fclose(userFile);
+		//userFile = fopen("User.txt", "r+");
 	}
 	return userFile;
 }
@@ -56,6 +56,28 @@ Name, Passwort
 //}
 
 
+int findUserByName2(FILE* userFile, TUser user) {
+	TUser* userInFile = new TUser;
+	while (!feof(userFile))
+	{
+		fread(userInFile, sizeof(TUser), 1, userFile);
+		if (feof(userFile)) {
+			break;
+		}
+		if (strcmp(userInFile->name, user.name) == 0) {
+			if (strcmp(userInFile->password, user.password) == 0) {
+				return userInFile->id;
+			}
+			else {
+				break;
+			}
+			
+		}
+	}
+	delete userInFile;
+	return - 1;
+}
+
 
 //int findUserIdByName(FILE* userFile, TUser loginUser) {
 //	TUser* userInFile = new TUser;
@@ -74,7 +96,7 @@ Name, Passwort
 //	delete userInFile;
 //}
 
-bool userAlreadyExisting(FILE* userFile, TUser user) {
+bool userAlreadyExisting(FILE* userFile, TUser* user) {
 	fseek(userFile, sizeof(int), SEEK_SET);
 	bool userFound = false;
 	TUser* searchUser = new TUser;
@@ -84,11 +106,13 @@ bool userAlreadyExisting(FILE* userFile, TUser user) {
 		if (feof(userFile)) {
 			continue;
 		}
-		if (strcmp(user.name, searchUser->name) == 0) {
-			userFound == true;
+		int unserNameLength = strlen(searchUser->name);
+		if (strcmp(user->name, searchUser->name) == 0) {
+			userFound = true;
 		}
 	}
-	return false;
+	delete searchUser;
+	return userFound;
 }
 
 
@@ -106,17 +130,22 @@ Speichert die Daten eines Users an der Stelle userlocationInFile im File.
 ID-Management ist enthalten. Bei keiner (0), oder einer zu großen, wird eine passende ID eingefügt.
 Speicherort, Name, Passwort
 */
-void saveUserInFile(FILE* userlocationInFile, TUser userToSave) {
+void saveUserInFile(FILE* userlocationInFile, TUser* userToSave) {
+	//TUser* newUser = new TUser;
 	int userIdCounter = getUserIdCounter(userlocationInFile);
-	if (userToSave.id == NULL || userToSave.id >userIdCounter || userToSave.id < 0)
+	if (userToSave->id == NULL || userToSave->id >userIdCounter || userToSave->id < 0)
 	{
 		userIdCounter++;
-		userToSave.id = userIdCounter;
+		userToSave->id = userIdCounter;
 	}
-	fwrite(&userToSave, sizeof(TUser), 1, userlocationInFile);
+	//strcpy(newUser->name, userToSave.name);
+	//strcpy(newUser->password, userToSave.password);
+
+	fwrite(userToSave, sizeof(TUser), 1, userlocationInFile);
 	fseek(userlocationInFile, 0, SEEK_SET);
 	fwrite(&userIdCounter, sizeof(int), 1, userlocationInFile);
 }
+
 /*
 Findet User per ID aus Userfile.
 Parameter TUser, in den geschrieben wird; ID des Users
@@ -169,6 +198,27 @@ FILE* findUserDataLocation(TUser userToFind) {
 	return NULL;
 }
 
+void findUserDataLocation(TUser userToFind, FILE* userFile) {
+
+	TUser* tempUser = new TUser;
+	fseek(userFile, sizeof(int), SEEK_SET);
+	while (!feof(userFile))
+	{
+		fread(tempUser, sizeof(TUser), 1, userFile);
+		if (feof(userFile))
+		{
+			continue;
+		}
+		if (tempUser->id == userToFind.id)
+		{
+			delete tempUser;
+			long sizeOfTEvent = sizeof(TUser);
+			fseek(userFile, -sizeOfTEvent, SEEK_CUR);
+			break;
+		}
+	}
+}
+
 /*
 local
 Speichert user mit neuem Password, egal ob neuer User oder vorhandener
@@ -177,7 +227,7 @@ void saveNewPassword(TUser user, TString nPassword) {
 	FILE* userInFile = findUserDataLocation(user);
 	nPassword = enDecode(nPassword, false);
 	strcpy(user.password, nPassword.string);
-	saveUserInFile(userInFile, user);
+	saveUserInFile(userInFile, &user);
 }
 
 /*

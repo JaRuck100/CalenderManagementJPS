@@ -14,7 +14,7 @@ struct TEvent
 
 FILE* openEventFile();
 void buildEventFromFileArray(TEvent*, TFieldArray);
-void saveEventInFile(FILE*, char*, char*, char*, int);
+//void saveEventInFile(FILE*, char*, char*, char*, int);
 void saveEventInFile(FILE*, TFieldArray, int);
 //FILE* searchForEventPosition(FILE*, int);
 int changeEvent(FILE*, TFieldArray);

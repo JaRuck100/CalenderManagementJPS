@@ -126,7 +126,7 @@ void saveEventInFile(FILE* eventsFile, TFieldArray fieldArray, int userId) {
 baut aus einem filearray die werte in ein übergebenes Event
 */
 void buildEventFromFileArray(TEvent* event, TFieldArray fieldArray) {
-	for (size_t i = 0; i < fieldArray.length; i++)
+	for (size_t i = 1; i < fieldArray.length; i++)
 	{
 		if (strcmp(fieldArray.fields[i].name.string, "title") == 0) {
 			strcpy(event->title, fieldArray.fields[i].value.string);
@@ -137,7 +137,7 @@ void buildEventFromFileArray(TEvent* event, TFieldArray fieldArray) {
 		}else if (strcmp(fieldArray.fields[i].name.string, "end") == 0) {
 			strcpy(event->end, fieldArray.fields[i].value.string);
 			continue;
-		}else if (strcmp(fieldArray.fields[i].name.string, "eventId") == 0) {
+		}else if (strcmp(fieldArray.fields[i].name.string, "id") == 0) {
 			event->id = atoi(fieldArray.fields[i].value.string);
 			continue;
 		}else if (strcmp(fieldArray.fields[i].name.string, "description") == 0) {
@@ -199,13 +199,15 @@ int changeEvent(FILE* eventsFile, TFieldArray fieldArray) {
 			long sizeOfTEvent = sizeof(TEvent);
 
 
-			fseek(eventsFile, -sizeOfTEvent, SEEK_CUR);			
+			fseek(eventsFile, -sizeOfTEvent, SEEK_CUR);	
+			changedEvent->userId = targetEvent->userId;
 			fwrite(changedEvent, sizeof(TEvent), 1, eventsFile);
 			eventFound = true;
 			break;
 		}
 	}
 	delete targetEvent;
+	delete changedEvent;
 	if (eventFound) {
 		return 0;
 	}
@@ -234,15 +236,15 @@ int deleteEvent(FILE* eventsFile, int eventId) {
 	TEvent* event = new TEvent;
 	while (!feof(eventsFile))
 	{
-		event = new TEvent;
+		//event = new TEvent;
 		fread(event, sizeof(TEvent), 1, eventsFile);
 		if (feof(eventsFile) || event->id == eventId) {
 			continue;
 		}
 		fwrite(event, sizeof(TEvent), 1, temp);
-		delete event;
+		
 	}
-
+	delete event;
 	fclose(temp);
 	fclose(eventsFile);
 	if (remove("Events.txt") != 0) {
@@ -255,6 +257,5 @@ int deleteEvent(FILE* eventsFile, int eventId) {
 	}
 	eventsFile = openEventFile();
 
-	delete event;
 	return 0;
 }
