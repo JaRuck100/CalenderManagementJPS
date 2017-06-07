@@ -1,6 +1,7 @@
 #pragma once
 #include <iostream>
 #include <stdio.h>
+#include "StringLib.h"
 
 using namespace std;
 
@@ -12,13 +13,11 @@ struct  TUser
 };
 
 FILE* openUserFile();
-//void saveUserInFile(FILE*, char*, char*);
 void saveUserInFile(FILE*, TUser*);
-TString enDecode(TString, bool);
+//TString enDecode(TString, bool);
 void saveNewPassword(TUser, TString);
 FILE* findUserDataLocation(TUser);
-void findUserDataLocation(TUser, FILE*);
 TUser* findUser(int);
 int getUserIdCounter(FILE*);
 bool userAlreadyExisting(FILE*, TUser*);
-int findUserByName2(FILE*, TUser);
+int findUserByName(FILE*, TUser);

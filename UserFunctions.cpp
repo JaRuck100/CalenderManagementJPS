@@ -1,9 +1,8 @@
 #include <iostream>
 #include <stdio.h>
 #include <io.h>
-#include "GeneralFuctions.h"
 #include "UserFunctions.h"
-#include "EventFunctions.h"
+#include "StringLib.h"
 
 #pragma warning(disable:4996)
 using namespace std;
@@ -30,33 +29,16 @@ FILE* openUserFile() {
 		}
 		int userIdCounter = 0;
 		fwrite(&userIdCounter, sizeof(int), 1, userFile);
-		//fclose(userFile);
-		//userFile = fopen("User.txt", "r+");
 	}
 	return userFile;
 }
+
 /*
-Speichert die Daten eines Users in userFile
-Name, Passwort
+Sucht in der Datei nach dem Namen des Useres
+Ist Name vorhanden, prüfen ob Password richtig ist -> Rückgabe der User-Id
+Sonst Rückgabe -1
 */
-//void saveUserInFile(FILE* userFile, char* userName, char* userPasword) {
-//	TUser* newUser = new TUser;
-//	int userIdCounter = getIdCounter(userFile);
-//
-//	strcpy(newUser->name, userName);
-//	 Verschlüsselung benötigt
-//	strcpy(newUser->password, userPasword);
-//	newUser->id = userIdCounter;
-//
-//	fseek(userFile, 0, SEEK_END);
-//	fwrite(newUser, sizeof(TEvent), 1, userFile);
-//	fseek(userFile, 0, SEEK_SET);
-//	fwrite(&userIdCounter, sizeof(int), 1, userFile);
-//	delete newUser;
-//}
-
-
-int findUserByName2(FILE* userFile, TUser user) {
+int findUserByName(FILE* userFile, TUser user) {
 	TUser* userInFile = new TUser;
 	while (!feof(userFile))
 	{
@@ -71,31 +53,16 @@ int findUserByName2(FILE* userFile, TUser user) {
 			else {
 				break;
 			}
-			
 		}
 	}
 	delete userInFile;
 	return - 1;
 }
 
-
-//int findUserIdByName(FILE* userFile, TUser loginUser) {
-//	TUser* userInFile = new TUser;
-//	while (!feof(userFile)) {
-//		fread(userInFile, sizeof(TUser), 1, userFile);
-//		if (feof(userFile)){
-//			continue;
-//		}
-//		if (strcmp(userInFile->name, loginUser.name) == 0) {
-//			if (strcmp(userInFile->password, loginUser.password) == 0) {
-//				return userInFile->id;
-//			}
-//		}
-//	}
-//	return -1;
-//	delete userInFile;
-//}
-
+/*
+Prüft, ob es schon einen user mit dem Usernamen gibt
+Gibt true zurück, wenn Name schon vorhanden
+*/
 bool userAlreadyExisting(FILE* userFile, TUser* user) {
 	fseek(userFile, sizeof(int), SEEK_SET);
 	bool userFound = false;
@@ -106,7 +73,6 @@ bool userAlreadyExisting(FILE* userFile, TUser* user) {
 		if (feof(userFile)) {
 			continue;
 		}
-		int unserNameLength = strlen(searchUser->name);
 		if (strcmp(user->name, searchUser->name) == 0) {
 			userFound = true;
 		}
@@ -115,7 +81,9 @@ bool userAlreadyExisting(FILE* userFile, TUser* user) {
 	return userFound;
 }
 
-
+/*
+Liest die Zähler-ID aus dem File
+*/
 int getUserIdCounter(FILE* file) {
 	long temp = ftell(file);
 	int idCounter;
@@ -131,16 +99,12 @@ ID-Management ist enthalten. Bei keiner (0), oder einer zu großen, wird eine pas
 Speicherort, Name, Passwort
 */
 void saveUserInFile(FILE* userlocationInFile, TUser* userToSave) {
-	//TUser* newUser = new TUser;
 	int userIdCounter = getUserIdCounter(userlocationInFile);
 	if (userToSave->id == NULL || userToSave->id >userIdCounter || userToSave->id < 0)
 	{
 		userIdCounter++;
 		userToSave->id = userIdCounter;
 	}
-	//strcpy(newUser->name, userToSave.name);
-	//strcpy(newUser->password, userToSave.password);
-
 	cout << (fwrite(userToSave, sizeof(TUser), 1, userlocationInFile));
 	fseek(userlocationInFile, 0, SEEK_SET);
 	fwrite(&userIdCounter, sizeof(int), 1, userlocationInFile);
@@ -190,8 +154,8 @@ FILE* findUserDataLocation(TUser userToFind) {
 		if (tempUser->id == userToFind.id)
 		{
 			delete tempUser;
-			long sizeOfTEvent = sizeof(TUser);
-			fseek(f, -sizeOfTEvent, SEEK_CUR);
+			long sizeOfTUser = sizeof(TUser);
+			fseek(f, -sizeOfTUser, SEEK_CUR);
 			return f;
 		}
 	}
@@ -199,37 +163,17 @@ FILE* findUserDataLocation(TUser userToFind) {
 	return NULL;
 }
 
-void findUserDataLocation(TUser userToFind, FILE* userFile) {
-
-	TUser* tempUser = new TUser;
-	fseek(userFile, sizeof(int), SEEK_SET);
-	while (!feof(userFile))
-	{
-		fread(tempUser, sizeof(TUser), 1, userFile);
-		if (feof(userFile))
-		{
-			continue;
-		}
-		if (tempUser->id == userToFind.id)
-		{
-			delete tempUser;
-			long sizeOfTEvent = sizeof(TUser);
-			fseek(userFile, -sizeOfTEvent, SEEK_CUR);
-			break;
-		}
-	}
-}
-
+//Philips Password encoding
 /*
 local
 Speichert user mit neuem Password, egal ob neuer User oder vorhandener
 */
-void saveNewPassword(TUser user, TString nPassword) {
-	FILE* userInFile = findUserDataLocation(user);
-	nPassword = enDecode(nPassword, false);
-	strcpy(user.password, nPassword.string);
-	saveUserInFile(userInFile, &user);
-}
+//void saveNewPassword(TUser user, TString nPassword) {
+//	FILE* userInFile = findUserDataLocation(user);
+//	nPassword = enDecode(nPassword, false);
+//	strcpy(user.password, nPassword.string);
+//	saveUserInFile(userInFile, &user);
+//}
 
 /*
 Braucht aktuellen User, altes Password zur bestätigung und zwei mal das neue Password zur Kontrolle
@@ -252,26 +196,30 @@ local
 Verschlüsselt den TString bei false, entschlüsselt bei true
 Gibt neuen verschlüsselten TString zurück
 */
-TString enDecode(TString toAlter, bool decode) {
-	int codeBits = 6;
-	TString toReturn = initializeString("");
-	if (decode)
-	{
-		char decoded;
-		for (size_t i = 0; i < toAlter.bufferSize - 1; i++)
-		{
-			decoded = toAlter.string[i] - codeBits;
-			toReturn.string[i] = decoded;
-		}
-	}
-	else
-	{
-		char encoded;
-		for (size_t i = 0; i < toAlter.bufferSize; i++)
-		{
-			encoded = toAlter.string[i] + codeBits;
-			toReturn.string[i] = encoded;
-		}
-	}
-	return toReturn;
-}
+//TString enDecode(TString toAlter, bool decode) {
+//	int codeBits = 6;
+//	TString toReturn = initializeString("");
+//	if (decode)
+//	{
+//		char decoded;
+//		for (size_t i = 0; i < toAlter.bufferSize - 1; i++)
+//		{
+//			decoded = toAlter.string[i] - codeBits;
+//			toReturn.string[i] = decoded;
+//		}
+//	}
+//	else
+//	{
+//		char encoded;
+//		for (size_t i = 0; i < toAlter.bufferSize; i++)
+//		{
+//			encoded = toAlter.string[i] + codeBits;
+//			toReturn.string[i] = encoded;
+//		}
+//	}
+//	return toReturn;
+//}
+
+
+
+

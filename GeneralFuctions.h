@@ -1,8 +1,10 @@
 #include <stdio.h>
 #include "StringLib.h"
+#include "FieldsLib.h"
+#include "EventFunctions.h"
 
 #pragma once
-TString getHtmlFromFile(FILE*);
-void generateColumnOfRow(TString*, char*);
 int getIdCounter(FILE*);
-void errorPage(char* reason);
+bool isHex(char c);
+TFieldArray parseInputString(char*);
+void buildJson(TString*, TEvent*);

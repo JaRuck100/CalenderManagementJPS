@@ -18,7 +18,6 @@ FILE* openEventFile() {
 	if (access("Events.txt", 00) == 0) {
 		eventsFile = fopen("Events.txt", "r+");
 		if (eventsFile == NULL) {
-			errorPage("fehler beim öffnen");
 			return NULL;
 		}
 	}
@@ -31,15 +30,14 @@ FILE* openEventFile() {
 			temp = fopen("temp.txt", "r");
 			eventsFile = fopen("Events.txt", "w+");
 			if (eventsFile == NULL || temp == NULL) {
-				errorPage("fehler beim öffnen");
 				return NULL;
 			}
 
 			TEvent* tempEvent = new TEvent;
 			if (tempEvent == NULL) {
-				errorPage("fehler beim erstellen");
 				return NULL;
 			}
+
 			int eventIdCounter = 0;
 			fread(&eventIdCounter, sizeof(int), 1, temp);
 			fwrite(&eventIdCounter, sizeof(int), 1, eventsFile);
@@ -77,14 +75,13 @@ FILE* openEventFile() {
 		}
 		int eventIdCounter = 0;
 		fwrite(&eventIdCounter, sizeof(int), 1, eventsFile);
-
 	}
 	return eventsFile;
 }
 
 /*
 Speichert die Daten eines Events in eventsFile
-Nutzt ein Feldarray, in dem die Formularfelder mit Wert gespeichert sind
+Nutzt ein Fieldarray, in dem die Formularfelder mit Wert gespeichert sind
 */
 void saveEventInFile(FILE* eventsFile, TFieldArray fieldArray, int userId) {
 	TEvent* newEvent = new TEvent;
@@ -100,90 +97,31 @@ void saveEventInFile(FILE* eventsFile, TFieldArray fieldArray, int userId) {
 	delete newEvent;
 }
 
-/*Sucht im EventFile nach einem Event by id
-//Gibt die Position des Events im File zurück oder NULL
-//*/
-//FILE* searchForEventPosition(FILE* eventsFile, int eventId) {
-//	TEvent* targetEvent = new TEvent;
-//	fseek(eventsFile, sizeof(int), SEEK_SET);
-//
-//	while (!feof(eventsFile))
-//	{
-//		fread(targetEvent, sizeof(TEvent), 1, eventsFile);
-//		if (feof(eventsFile)) {
-//			continue;
-//		}
-//		if (targetEvent->id == eventId) {
-//			fseek(eventsFile, -sizeof(TEvent), SEEK_CUR);
-//			return eventsFile;
-//		}
-//	}
-//	delete targetEvent;
-//	return NULL;
-//}
-
 /*
-baut aus einem filearray die werte in ein übergebenes Event
+Baut die Werte aus einem fieldarray in ein übergebenes Event
 */
 void buildEventFromFileArray(TEvent* event, TFieldArray fieldArray) {
 	for (size_t i = 1; i < fieldArray.length; i++)
 	{
 		if (strcmp(fieldArray.fields[i].name.string, "title") == 0) {
 			strcpy(event->title, fieldArray.fields[i].value.string);
-			continue;
 		}else if (strcmp(fieldArray.fields[i].name.string, "start") == 0) {
 			strcpy(event->start, fieldArray.fields[i].value.string);
-			continue;
 		}else if (strcmp(fieldArray.fields[i].name.string, "end") == 0) {
 			strcpy(event->end, fieldArray.fields[i].value.string);
-			continue;
 		}else if (strcmp(fieldArray.fields[i].name.string, "id") == 0) {
 			event->id = atoi(fieldArray.fields[i].value.string);
-			continue;
 		}else if (strcmp(fieldArray.fields[i].name.string, "description") == 0) {
 			strcpy(event->description, fieldArray.fields[i].value.string);
 		}
 	}
 }
 
-
 /*
-aucht in der Datei nach dem Event mit eventId
-ändert die Werte des events, die im FileArray array liegen, rest bleibt 
-speichert das geänderete Event an die Stelle des alten Events
+Läd Events aus der Datei und sucht nach dem Event mit der id aus dem Fieldarray
+Speichert das neue/geänderte Event an die Stelle des alten Events
 */
-
-//int changeEvent(FILE* eventsFile, TFieldArray fieldArray) {
-//	TEvent* targetEvent = new TEvent;
-//	fseek(eventsFile, sizeof(int), SEEK_SET);
-//	bool eventFound = false;
-//	while (!feof(eventsFile) && !eventFound)
-//	{
-//		fread(targetEvent, sizeof(TEvent), 1, eventsFile);
-//		if (feof(eventsFile)) {
-//			continue;
-//		}
-//		if (targetEvent->id == eventId) {
-//			fseek(eventsFile, -sizeof(TEvent), SEEK_CUR);
-//			buildEventFromFileArray(targetEvent, fieldArray);
-//			fwrite(targetEvent, sizeof(TEvent), 1, eventsFile);
-//			eventFound = true;
-//			continue;
-//		}
-//	}
-//	delete targetEvent;
-//	if (eventFound) {
-//		return 0;
-//	}
-//	else {
-//		return 1;
-//	}
-//
-//}
-
-
 int changeEvent(FILE* eventsFile, TFieldArray fieldArray) {
-
 	TEvent* targetEvent = new TEvent;
 	TEvent* changedEvent = new TEvent;
 	buildEventFromFileArray(changedEvent, fieldArray);
@@ -197,8 +135,6 @@ int changeEvent(FILE* eventsFile, TFieldArray fieldArray) {
 		}
 		if (targetEvent->id == changedEvent->id) {
 			long sizeOfTEvent = sizeof(TEvent);
-
-
 			fseek(eventsFile, -sizeOfTEvent, SEEK_CUR);	
 			changedEvent->userId = targetEvent->userId;
 			fwrite(changedEvent, sizeof(TEvent), 1, eventsFile);
@@ -214,12 +150,12 @@ int changeEvent(FILE* eventsFile, TFieldArray fieldArray) {
 	else {
 		return 1;
 	}
-
 }
 
-
 /*
-löscht das Event mit der Id eventId aus der Event-Datei
+Löscht das Event mit der Id eventId aus der Event-Datei
+Erstellt eine temp Datei, speichert alle außer das Event mit eventid in tmp
+Löscht Event-Datei und benennt temp in Event-Datei um 
 */
 int deleteEvent(FILE* eventsFile, int eventId) {
 	FILE* temp;
@@ -227,35 +163,28 @@ int deleteEvent(FILE* eventsFile, int eventId) {
 	if (temp == NULL) {
 		return 1;
 	}
-
 	fseek(eventsFile, 0, SEEK_SET);
 	int EventIdCounter;
 	fread(&EventIdCounter, sizeof(int), 1, eventsFile);
 	fwrite(&EventIdCounter, sizeof(int), 1, temp);
-
 	TEvent* event = new TEvent;
 	while (!feof(eventsFile))
 	{
-		//event = new TEvent;
 		fread(event, sizeof(TEvent), 1, eventsFile);
 		if (feof(eventsFile) || event->id == eventId) {
 			continue;
 		}
 		fwrite(event, sizeof(TEvent), 1, temp);
-		
 	}
 	delete event;
 	fclose(temp);
 	fclose(eventsFile);
 	if (remove("Events.txt") != 0) {
-		errorPage("löschen fehlgeschlagen");
 		return 2;
 	}
 	if (rename("temp.txt", "Events.txt") != 0) {
-		errorPage("umbennenung fehlgeschlagen");
 		return 2;
 	}
 	eventsFile = openEventFile();
-
 	return 0;
 }

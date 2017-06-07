@@ -12,6 +12,7 @@ TField initializeField(char* name, char* value) {
 	newField.value = initializeString(value);
 	return newField;
 }
+
 /*
 Erstellt aus zwei TString ein Field
 name = name des Inputfeldes, value= Wert des Inputfeldes
@@ -27,14 +28,6 @@ Löscht ein TField
 void safeDeleteField(TField* field) {
 	safeDeleteString(&field->name);
 	safeDeleteString(&field->value);
-}
-
-/*
-Ändert den Inhalt des values
-*/
-void changeFieldValue(TField* field, char* source) {
-	safeDeleteString(&field->value);
-	field->value = initializeString(source);
 }
 
 /*

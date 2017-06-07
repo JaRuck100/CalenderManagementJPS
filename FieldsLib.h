@@ -16,7 +16,6 @@ struct TFieldArray
 TField initializeField(char*, char*);
 TField initializeField(TString, TString);
 void safeDeleteField(TField*);
-void changeFieldValue(TField*, char*);
 void copyField(TField*, TField);
 TFieldArray initializeFieldArray(TField);
 void safeDeleteFieldArray(TFieldArray*);
