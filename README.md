@@ -1,18 +1,16 @@
 # CalenderManagementJPS
 
 ## to do:
-  - template erstellen
+  ~~- template erstellen
   - css dateien
   - login funktion
-  - ~~erstellen der benötugten Dateien~~
+  - erstellen der benötugten Dateien~~
     - Verschlüsselung einbauen
-  - ~~speichern in Dateien~~
+  ~~- speichern in Dateien
   - anzeige Termine
     - ändern der Termine
     - löschen Termine
     - anlegen Termine
       - kalender picker
   - passwort ändern
-  - registierungsseite
-  
-  
+  - registierungsseite  
