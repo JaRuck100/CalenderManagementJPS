@@ -141,7 +141,7 @@ void saveUserInFile(FILE* userlocationInFile, TUser* userToSave) {
 	//strcpy(newUser->name, userToSave.name);
 	//strcpy(newUser->password, userToSave.password);
 
-	fwrite(userToSave, sizeof(TUser), 1, userlocationInFile);
+	cout << (fwrite(userToSave, sizeof(TUser), 1, userlocationInFile));
 	fseek(userlocationInFile, 0, SEEK_SET);
 	fwrite(&userIdCounter, sizeof(int), 1, userlocationInFile);
 }
@@ -190,7 +190,8 @@ FILE* findUserDataLocation(TUser userToFind) {
 		if (tempUser->id == userToFind.id)
 		{
 			delete tempUser;
-			fseek(f, -(int)sizeof(TUser), SEEK_CUR);
+			long sizeOfTEvent = sizeof(TUser);
+			fseek(f, -sizeOfTEvent, SEEK_CUR);
 			return f;
 		}
 	}
