@@ -28,7 +28,7 @@ void main() {
 		}
 
 		char input[500 + 1] = { 0 };
-		//cin.getline(input, 501);
+		cin.getline(input, 501);
 		//testing strings
 		//strcpy(input, "url=/register&username=test2&password=bla2&passwordRepeat=bla2");
 		//strcpy(input, "url=/register&username=test6&password=bla6&passwordRepeat=bla6");
