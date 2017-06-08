@@ -79,3 +79,25 @@ Copiert einen TString an den Platz vom TString destination
 void copyString(TString* destination, TString source) {
 	copyString(destination, source.string);
 }
+
+/*
+Vergleicht zwei TStrings (zunächst wird gleiche Länge überprüft)
+gibt false zurück, falls sie nicht gleich sind
+*/
+bool compareString(TString string1, TString string2) {
+	if (string1.bufferSize != string2.bufferSize)
+	{
+		return false;
+	}
+	else
+	{
+		for (size_t i = 0; i < string1.bufferSize; i++)
+		{
+			if (string1.string[i] != string2.string[i])
+			{
+				return false;
+			}
+		}
+	}
+	return true;
+}

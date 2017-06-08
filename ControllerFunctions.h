@@ -11,4 +11,4 @@ void searchForEventFunction(TFieldArray);
 void changeEventFunction(TFieldArray);
 void changePasswordFunction(TFieldArray, int);
 void logoutFunction(TFieldArray);
-void loginFunction(TFieldArray, FILE*);
+void loginFunction(TFieldArray);

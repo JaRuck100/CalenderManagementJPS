@@ -6,10 +6,10 @@ struct TEvent
 {
 	int id;
 	int userId;
-	char title[100 + 1] = { 0 };
-	char start[16 + 1] = { 0 };
-	char end[16 + 1] = { 0 };
-	char description[150 + 1] = { 0 };
+	char title[100 + 1];
+	char start[16 + 1];
+	char end[16 + 1];
+	char description[150 + 1];
 };
 
 FILE* openEventFile();

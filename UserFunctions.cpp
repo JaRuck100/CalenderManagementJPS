@@ -7,7 +7,6 @@
 #pragma warning(disable:4996)
 using namespace std;
 
-
 /*
 Öffnet das Userfile
 Gibt Pointer auf das geöffnete File zurück
@@ -36,7 +35,7 @@ FILE* openUserFile() {
 /*
 Sucht in der Datei nach dem Namen des Useres
 Ist Name vorhanden, prüfen ob Password richtig ist -> Rückgabe der User-Id
-Sonst Rückgabe -1
+Sonst Rückgabe 0
 */
 int findUserByName(FILE* userFile, TUser user) {
 	TUser* userInFile = new TUser;
@@ -56,7 +55,7 @@ int findUserByName(FILE* userFile, TUser user) {
 		}
 	}
 	delete userInFile;
-	return - 1;
+	return 0;
 }
 
 /*
@@ -105,7 +104,7 @@ void saveUserInFile(FILE* userlocationInFile, TUser* userToSave) {
 		userIdCounter++;
 		userToSave->id = userIdCounter;
 	}
-	cout << (fwrite(userToSave, sizeof(TUser), 1, userlocationInFile));
+	fwrite(userToSave, sizeof(TUser), 1, userlocationInFile);
 	fseek(userlocationInFile, 0, SEEK_SET);
 	fwrite(&userIdCounter, sizeof(int), 1, userlocationInFile);
 }
@@ -137,8 +136,7 @@ TUser* findUser(int userId) {
 }
 
 /*
-Findet User nach seiner ID im UserFile und gibt dessen Stelle zurück oder NULL.
-Es muss auf NULL geprüft werden!
+Findet User nach seiner ID im UserFile und gibt dessen Stelle zurück oder eof.
 */
 FILE* findUserDataLocation(TUser userToFind) {
 	FILE* f = openUserFile();
@@ -159,67 +157,74 @@ FILE* findUserDataLocation(TUser userToFind) {
 			return f;
 		}
 	}
-	fclose(f);
-	return NULL;
+	delete tempUser;
+	return f;
 }
 
-//Philips Password encoding
 /*
-local
-Speichert user mit neuem Password, egal ob neuer User oder vorhandener
+verschlüsselt das übergebene Passwort und vergleicht dann die Übereinstimmung
 */
-//void saveNewPassword(TUser user, TString nPassword) {
-//	FILE* userInFile = findUserDataLocation(user);
-//	nPassword = enDecode(nPassword, false);
-//	strcpy(user.password, nPassword.string);
-//	saveUserInFile(userInFile, &user);
-//}
-
-/*
-Braucht aktuellen User, altes Password zur bestätigung und zwei mal das neue Password zur Kontrolle
-Gibt false zurück, wenn das alte Password falsch ist oder die neuen nicht übereinstimmen
-*/
-//bool alterUserPassword(TUser user, TString oPassword, TString nPassword1, TString nPassword2) {
-//	if (compareString(enDecode(initializeString(user.password), true), oPassword))
-//	{
-//		if (compareString(nPassword1, nPassword2))
-//		{
-//			saveNewPassword(user, nPassword1);
-//			return true;
-//		}
-//	}
-//	return false;
-//}
+bool checkPassword(TUser user, TString passwordToCheck) {
+	return compareString(initializeString(user.password), enDecode(passwordToCheck, false));
+}
 
 /*
 local
-Verschlüsselt den TString bei false, entschlüsselt bei true
-Gibt neuen verschlüsselten TString zurück
+speichert user mit neuem password, egal ob neuer user oder vorhandener
 */
-//TString enDecode(TString toAlter, bool decode) {
-//	int codeBits = 6;
-//	TString toReturn = initializeString("");
-//	if (decode)
-//	{
-//		char decoded;
-//		for (size_t i = 0; i < toAlter.bufferSize - 1; i++)
-//		{
-//			decoded = toAlter.string[i] - codeBits;
-//			toReturn.string[i] = decoded;
-//		}
-//	}
-//	else
-//	{
-//		char encoded;
-//		for (size_t i = 0; i < toAlter.bufferSize; i++)
-//		{
-//			encoded = toAlter.string[i] + codeBits;
-//			toReturn.string[i] = encoded;
-//		}
-//	}
-//	return toReturn;
-//}
+void saveNewPassword(TUser *user, TString npassword) {
+	FILE* userinfile = findUserDataLocation(*user);
+	npassword = enDecode(npassword, false);
+	strcpy(user->password, npassword.string);
+	saveUserInFile(userinfile, user);
+}
 
+/*
+braucht aktuellen user, altes password zur bestätigung und zwei mal das neue password zur kontrolle
+gibt false zurück, wenn das alte password falsch ist oder die neuen nicht übereinstimmen
+*/
+bool alterUserpassword(TUser *user, TString opassword, TString npassword1, TString npassword2) {
+	if (checkPassword(*user, opassword))
+	{
+		if (compareString(npassword1, npassword2))
+		{
+			saveNewPassword(user, npassword1);
+			return true;
+		}
+	}
+	return false;
+}
 
-
+/*
+local
+verschlüsselt den tstring bei false, entschlüsselt bei true
+gibt neuen verschlüsselten tstring zurück
+*/
+TString enDecode(TString toalter, bool decode) {
+	int codebits = 6;
+	TString toReturn = initializeString("");
+	if (decode)
+	{
+		char decoded;
+		for (size_t i = 0; i < toalter.bufferSize; i++)
+		{
+			decoded = toalter.string[i] - codebits;
+			toReturn.string[i] = decoded;
+		}
+		toReturn.string[toalter.bufferSize-1] = '\0';
+		toReturn.bufferSize = toalter.bufferSize;
+	}
+	else
+	{
+		char encoded;
+		for (size_t i = 0; i < toalter.bufferSize; i++)
+		{
+			encoded = toalter.string[i] + codebits;
+			toReturn.string[i] = encoded;
+		}
+		toReturn.string[toalter.bufferSize - 1] = '\0';
+		toReturn.bufferSize = toalter.bufferSize;
+	}
+	return toReturn;
+}
 

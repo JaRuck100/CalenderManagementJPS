@@ -14,6 +14,7 @@ Registiert neuen User für die Anwendung
 */
 void registerFunction(TFieldArray inputFields) {
 	TUser* newUser = new TUser;
+	TString password = initializeString("");
 	char repetedPassword[40] = { 0 };
 	for (size_t i = 1; i < inputFields.length; i++) {
 		if (strcmp(inputFields.fields[i].name.string, "username") == 0) {
@@ -49,16 +50,9 @@ void registerFunction(TFieldArray inputFields) {
 
 	if (isNewUser == true) {
 		// verschlüsseldung bisher nicht vorhanden
-		int userIdCounter = 0;
-		fseek(userFile, 0, SEEK_SET);
-		fread(&userIdCounter, sizeof(int), 1, userFile);
-		userIdCounter++;
-		newUser->id = userIdCounter;
-		fseek(userFile, 0, SEEK_END);
-		fwrite(newUser, sizeof(TUser), 1, userFile);
-		fseek(userFile, 0, SEEK_SET);
-		fwrite(&userIdCounter, sizeof(int), 1, userFile);
-		fclose(userFile);
+		copyString(&password, newUser->password);
+		//
+		saveNewPassword(newUser, password);
 
 		cout << "Content-type:text/html\r\n\r\n";
 		cout << "y";
@@ -112,7 +106,7 @@ void showEventsFunction(TFieldArray inputFields, int userId) {
 		}
 	}
 	addToString(&eventsJson, " ]");
-	cout << "Content-type:text/html\r\n\r\n";
+	cout << "Content-type:application/json\r\n\r\n";
 	cout << eventsJson.string;
 	fclose(eventsFile);
 	delete event;
@@ -145,6 +139,12 @@ void deleteEventFunction(TFieldArray inputFields) {
 Legt ein neues Event für den User an
 */
 void addEventFunction(TFieldArray inputFields, int userId) {
+	if (!userId) {
+		cout << "Content-type:text/html\r\n\r\n";
+		cout << "n";
+		return;
+	}
+
 	FILE* eventsFile;
 	eventsFile = openEventFile();
 	if (eventsFile == NULL) {
@@ -187,7 +187,7 @@ void searchForEventFunction(TFieldArray inputFields) {
 		delete searchedEvent;
 		fclose(eventsFile);
 	}
-	cout << "Content-type:text/html\r\n\r\n";
+	cout << "Content-type:application/json\r\n\r\n";
 	cout << eventJson.string;
 	safeDeleteString(&eventJson);
 }
@@ -226,14 +226,17 @@ void changePasswordFunction(TFieldArray inputFields, int userId) {
 		char newPassword[40 + 1] = { 0 };
 		char passwordRepeat[40 + 1] = { 0 };
 		for (size_t i = 1; i < inputFields.length; i++) {
-			if (strcmp(inputFields.fields[i].name.string, "password") == 0) {
-				strcpy(oldPassword, inputFields.fields[i].value.string);
+			if (strcmp(inputFields.fields[i].name.string, "oldPassword") == 0) {
+				TString encodedPassword = enDecode(inputFields.fields[i].value, false);
+				strcpy(oldPassword, encodedPassword.string);
 			}
 			else if (strcmp(inputFields.fields[i].name.string, "newPassword") == 0) {
-				strcpy(newPassword, inputFields.fields[i].value.string);
+				TString encodedPassword = enDecode(inputFields.fields[i].value, false);
+				strcpy(newPassword, encodedPassword.string);
 			}
 			else if (strcmp(inputFields.fields[i].name.string, "passwordRepeat") == 0) {
-				strcpy(passwordRepeat, inputFields.fields[i].value.string);
+				TString encodedPassword = enDecode(inputFields.fields[i].value, false);
+				strcpy(passwordRepeat, encodedPassword.string);
 			}
 		}
 		bool rightOldPassword = (strcmp(user->password, oldPassword) == 0);
@@ -279,36 +282,38 @@ void logoutFunction(TFieldArray inputFields) {
 Loggt den user über Benutzername und password sein
 Prüft, ob der User existiert und ob das Passwort korrekt ist
 */
-void loginFunction(TFieldArray inputFields, FILE* currentUserFile) {
-	currentUserFile = fopen("Current_User.txt", "w");
-	if (currentUserFile == NULL) {
-		// Session Probleme
-	}
+void loginFunction(TFieldArray inputFields) {
 	FILE* userFile;
 	userFile = openUserFile();
-	TUser* userLogin = new TUser;
+	TUser userLogin;
 	for (size_t i = 1; i < inputFields.length; i++) {
 		if (strcmp(inputFields.fields[i].name.string, "username") == 0) {
-			strcpy(userLogin->name, inputFields.fields[i].value.string);
+			strcpy(userLogin.name, inputFields.fields[i].value.string);
 			continue;
 		}
 		else if (strcmp(inputFields.fields[i].name.string, "password") == 0) {
-			strcpy(userLogin->password, inputFields.fields[i].value.string);
+			TString encodedPassword = enDecode(inputFields.fields[i].value, false);
+			strcpy(userLogin.password, encodedPassword.string);
 			continue;
 		}
 	}
 	fseek(userFile, sizeof(int), SEEK_SET);
-	int userId = findUserByName(userFile, *userLogin);
-	if (userId == -1) {
+	int userId = findUserByName(userFile, userLogin);
+	if (!userId) {
 		cout << "Content-type:text/html\r\n\r\n";
 		cout << "n";
+		return;
 	}
-	else {
+
+	FILE* currentUserFile = fopen("Current_User.txt", "w");
+	if (currentUserFile == NULL) {
 		cout << "Content-type:text/html\r\n\r\n";
-		cout << "y;" << userId;
-		fwrite(&userId, sizeof(int), 1, currentUserFile);
+		cout << "n";
+		return;
 	}
-	delete userLogin;
-	fclose(userFile);
+	fwrite(&userId, sizeof(int), 1, currentUserFile);
 	fclose(currentUserFile);
+	fclose(userFile);
+	cout << "Content-type:text/html\r\n\r\n";
+	cout << "y;" << userId;
 }
