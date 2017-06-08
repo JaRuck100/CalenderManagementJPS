@@ -105,6 +105,10 @@ void showEventsFunction(TFieldArray inputFields, int userId) {
 			fseek(eventsFile, -sizeOfTEvent, SEEK_CUR);
 		}
 	}
+	if (eventsJson.string[strlen(eventsJson.string) - 1] == ',') {
+		eventsJson.string[strlen(eventsJson.string) - 1] = 0;
+	}
+
 	addToString(&eventsJson, " ]");
 	cout << "Content-type:application/json\r\n\r\n";
 	cout << eventsJson.string;
